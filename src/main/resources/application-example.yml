@@ -1,0 +1,117 @@
+#    dev / prod : 개발 DB 연결 설정
+#    local / s3 : 파일 업로드 서버 구분
+#    TODO 한 프로젝트에 DB를 여러개 사용할 수 있는 경우가 있으므로 DB관련 프로파일을 추가해서 사용할 수 있도록 처리
+
+spring:
+  profiles:
+    group:
+      dev: s3
+      prod: local
+    active: dev # 기본 활성화 프로파일 (dev 그룹)
+  # 생성 모듈의 domain 패키지 지정
+  mybatis:
+    type-aliases-package: com.nive.prjt.nive.*.domain
+    configuration:
+      map-underscore-to-camel-case: true
+  servlet:
+    multipart:
+      max-file-size: 10MB #하나에 10MB
+      max-request-size: 10MB  #한 요청에 10MB
+
+
+--- #테스트 버전의 환경정보 설정
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:h2:tcp://localhost/~/test
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+    hikari:
+      maximum-pool-size: 10
+  h2:
+    console:
+      enabled: true # http://localhost:8080/h2-console/login.do 접근 가능
+  mybatis:
+    mapper-locations: classpath:mapper/h2/*.xml  # 모든 매퍼 XML 파일 로드
+
+
+--- #운영 버전의 환경정보 설정
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: jdbc:mariadb://rds.amazonaws.com:3306/testdb
+    driver-class-name: org.mariadb.jdbc.Driver
+    username:
+    password:
+    hikari:
+      maximum-pool-size: 10
+  mybatis:
+    mapper-locations: classpath:mapper/maria/*.xml  # 모든 매퍼 XML 파일 로드
+
+
+--- #MVC Exception Handler
+spring:
+  config:
+    activate:
+      on-profile: mvc
+
+--- #REST API Exception Handler
+spring:
+  config:
+    activate:
+      on-profile: rest
+
+--- #S3 Profile upload
+spring:
+  config:
+    activate:
+      on-profile: s3
+  file-storage:
+    bucket: test
+    access-key:
+    secret-key:
+    region:
+
+---  #LOCAL Storage Profile upload
+spring:
+  config:
+    activate:
+      on-profile: local
+  file-storage:
+    provider: local
+    # XXX   본인 로컬 스토리지로 수정 후 작업하시면 됩니다
+    path: /proejct/projctname/src/main/resources/upload
+
+
+springdoc:
+  api-docs:
+    #    title: "SpringBoot 3.4.1 + Gradle + YML + Mybatis API Documentation" # API 문서 제목
+    #    description: "This is the API documentation for SpringBoot 3.4.1 Rest API System" # API 문서 설명
+    #    version: "@springdoc.version@" # API 버전
+    #    terms-of-service: "http://example.com/terms" # 서비스 약관 링크
+    #    enabled: true
+    path: /api-docs
+  swagger-ui:
+    disable-swagger-default-url: true
+    display-request-duration: false # 요청 지속 시간 표시 여부
+    operations-sorter: alpha
+    enabled: true # Swagger UI 활성화
+    path: "/swagger-ui.html" # Swagger UI의 경로
+    doc-expansion: "none" # 요청/응답 필드 기본적으로 접힘 상태
+    default-consumes-media-type: application/json;charset=UTF-8
+    default-produces-media-type: application/json;charset=UTF-8
+    default-model-expand-depth: 1 # 모델에 대한 기본 확장 깊이
+    default-model-rendering: "model" # 모델 표시 형식 (example, model)
+    display-operation-id: true # operationId 표시 여부
+    display-request-size: true # 요청 크기 표시 여부
+    display-response-size: true # 응답 크기 표시 여부
+    filter: true # 필터 활성화 (필터를 사용하여 특정 API만 표시)
+    show-extensions: true # 확장 정보 표시 여부
+    show-common-extensions: true # 공통 확장 정보 표시 여부
+    tags-sorter: alpha
+  packages-to-scan: com.nive.prjt
