@@ -24,6 +24,9 @@ import java.util.Enumeration;
 @Component
 public class ComLoggingInterceptor implements HandlerInterceptor {
 
+    private static final String START_TIME = "START_TIME";
+    private static final String SESSION_ID = "SESSION_ID";
+
     @Autowired
     private final ComLoggingMapper ComLoggingMapper;
 
@@ -31,14 +34,13 @@ public class ComLoggingInterceptor implements HandlerInterceptor {
         ComLoggingMapper = comLoggingMapper;
     }
 
-    private long startTime;
-    private String sessionId;
 
     // 요청 처리 전에 실행
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        startTime = System.currentTimeMillis(); // 요청 시작 시간 기록
-        sessionId = request.getSession().getId();
+        request.setAttribute(START_TIME, System.currentTimeMillis());
+        request.setAttribute(SESSION_ID, request.getSession().getId());
+
         return true;
     }
 
@@ -52,6 +54,9 @@ public class ComLoggingInterceptor implements HandlerInterceptor {
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
         // 처리 시간 계산
+        Long startTime = (Long) request.getAttribute(START_TIME);
+        String sessionId = (String) request.getAttribute(SESSION_ID);
+
         long processingTime = System.currentTimeMillis() - startTime;
 
         // 요청 데이터를 수집
